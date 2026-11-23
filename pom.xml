@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.excelviewer</groupId>
+    <artifactId>tag-list-bom-generator</artifactId>
+    <version>9.0.0</version>
+    <name>TAG LIST AND BOM AUTO-GENERATOR</name>
+    <description>Desktop workspace for automated tag list generation, BOM consolidation, and Design Qualification export</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <javafx.version>21.0.4</javafx.version>
+        <poi.version>5.3.0</poi.version>
+        <app.name>TagListBOMGenerator</app.name>
+        <app.displayName>Tag List and BOM Auto-Generator</app.displayName>
+        <app.version>1.0.0</app.version>
+        <app.vendor>VS Design Solutions</app.vendor>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>17</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.excelviewer.TagGeneratorApp</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.excelviewer.TagGeneratorApp</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>exe</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.8.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy-runtime-libs</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/jpackage-input</outputDirectory>
+                                    <excludeGroupIds>org.openjfx</excludeGroupIds>
+                                    <overWriteReleases>true</overWriteReleases>
+                                    <overWriteSnapshots>true</overWriteSnapshots>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>copy-javafx-mods</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/javafx-mods</outputDirectory>
+                                    <includeGroupIds>org.openjfx</includeGroupIds>
+                                    <overWriteReleases>true</overWriteReleases>
+                                    <overWriteSnapshots>true</overWriteSnapshots>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-app-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                              todir="${project.build.directory}/jpackage-input"/>
+                                        <delete dir="${project.build.directory}/dist" failonerror="false"/>
+                                        <mkdir dir="${project.build.directory}/dist"/>
+                                        <exec executable="jpackage" failonerror="true">
+                                            <arg value="--type"/>
+                                            <arg value="app-image"/>
+                                            <arg value="--dest"/>
+                                            <arg value="${project.build.directory}/dist"/>
+                                            <arg value="--name"/>
+                                            <arg value="${app.name}"/>
+                                            <arg value="--app-version"/>
+                                            <arg value="${app.version}"/>
+                                            <arg value="--vendor"/>
+                                            <arg value="${app.vendor}"/>
+                                            <arg value="--description"/>
+                                            <arg value="${app.displayName}"/>
+                                            <arg value="--input"/>
+                                            <arg value="${project.build.directory}/jpackage-input"/>
+                                            <arg value="--main-jar"/>
+                                            <arg value="${project.build.finalName}.jar"/>
+                                            <arg value="--main-class"/>
+                                            <arg value="com.excelviewer.TagGeneratorApp"/>
+                                            <arg value="--module-path"/>
+                                            <arg value="${project.build.directory}/javafx-mods"/>
+                                            <arg value="--add-modules"/>
+                                            <arg value="javafx.controls,javafx.graphics,javafx.base"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
